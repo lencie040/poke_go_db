@@ -27,6 +27,10 @@ h1{font-size:22px;margin:0;letter-spacing:.02em}
 .stat b{display:block;font-size:17px;font-variant-numeric:tabular-nums}
 .stat span{font-size:11px;color:var(--sub)}
 
+/* source */
+.src{width:100%;font-size:12px;color:var(--sub)}
+.src.err{color:#c4432c}
+
 /* toolbar */
 .toolbar{position:sticky;top:0;z-index:10;background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(6px);padding:10px 0;margin:0 -16px;padding-left:16px;padding-right:16px;border-bottom:1px solid var(--line)}
 .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
@@ -117,6 +121,7 @@ dialog::backdrop{background:rgba(10,14,24,.5)}
   <header>
     <h1>ポケモンGO 個体データベース</h1>
     <div class="stats" id="stats"></div>
+    <div class="src" id="src"></div>
   </header>
 
   <div class="toolbar">
@@ -144,7 +149,8 @@ dialog::backdrop{background:rgba(10,14,24,.5)}
 <dialog id="dlg"><div class="dhead"><div id="dt"></div><button class="close" id="dc" aria-label="閉じる">×</button></div><div class="dbody" id="db"></div></dialog>
 
 <script>
-const DATA = /*__DATA__*/[];
+let DATA = /*__DATA__*/[];
+const EMBED_COUNT = DATA.length;
 
 const TYPE_COLOR = {"ノーマル":"#8e919c","ほのお":"#ee6a2f","みず":"#3d8cf0","でんき":"#e5b400","くさ":"#38a84b","こおり":"#4fc3d8","かくとう":"#c4432c","どく":"#9a4fc2","じめん":"#b8893c","ひこう":"#7f9df2","エスパー":"#ea5b8e","むし":"#8eaa1d","いわ":"#a99a62","ゴースト":"#6b55ad","ドラゴン":"#5b46d8","あく":"#4d4140","はがね":"#6f8fa3","フェアリー":"#ef84c6"};
 const CHIP_FLAGS = [
@@ -165,8 +171,9 @@ const $=s=>document.querySelector(s);
 const num=v=>{const n=parseFloat(String(v).replace(/,/g,""));return isNaN(n)?-Infinity:n};
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const rankNum=d=>num(d["ランク(並び替え用)"]);
-const MAX = {};
-NUM_COLS.forEach(k=>MAX[k]=Math.max(...DATA.map(d=>num(d[k]))));
+let MAX = {};
+function computeMax(){MAX={};NUM_COLS.forEach(k=>MAX[k]=Math.max(...DATA.map(d=>num(d[k]))))}
+computeMax();
 const typeBadges=d=>[d["タイプ1"],d["タイプ2"]].filter(Boolean).map(t=>`<span class="type" style="background:${TYPE_COLOR[t]||"#888"}">${esc(t)}</span>`).join("");
 const tags=d=>(d["特徴"]||"").split("、").filter(Boolean).map(t=>`<span class="tag${/シャドウ|キラ|色|XXL|とくしゅ/.test(t)?" hot":""}">${esc(t)}</span>`).join("");
 const ivCells=d=>{
@@ -236,23 +243,62 @@ function saveSort(){
   try{localStorage.setItem(SORT_KEY,JSON.stringify({sort:st.sort,dir:st.dir}))}catch(e){}
 }
 
-/* ---------- init ---------- */
-function init(){
-  loadSort();
+/* ---------- populate selects & stats (re-run when data changes) ---------- */
+function populate(){
   const types=[...new Set(DATA.flatMap(d=>[d["タイプ1"],d["タイプ2"]]).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"ja"));
+  $("#type").innerHTML='<option value="">タイプ：すべて</option>';
   $("#type").insertAdjacentHTML("beforeend",types.map(t=>`<option>${esc(t)}</option>`).join(""));
   const ranks=[...new Map(DATA.map(d=>[d["ランク"],rankNum(d)])).entries()].sort((a,b)=>b[1]-a[1]);
+  $("#rank").innerHTML='<option value="">ランク：すべて</option>';
   $("#rank").insertAdjacentHTML("beforeend",ranks.map(([r])=>`<option value="${esc(r)}">${starHTML({"ランク":r})}</option>`).join(""));
   // rank select shows plain text
   [...$("#rank").options].forEach(o=>{if(o.value)o.textContent=o.value.replace(/[✦✧]/g,"★").replace(/⁺/g,"+")});
-
-  $("#chips").innerHTML=CHIP_FLAGS.map(f=>`<button class="chip" data-f="${f.key}">${f.key}</button>`).join("")+`<button class="reset" id="reset">条件をクリア</button>`;
-
   const cnt={total:DATA.length,shadow:DATA.filter(d=>/シャドウ/.test(d["特徴"])).length,
     shiny:DATA.filter(d=>/色/.test(d["ニックネーム"])).length,
     top:DATA.filter(d=>rankNum(d)>=1400000).length};
   $("#stats").innerHTML=[["全件",cnt.total],["シャドウ",cnt.shadow],["色違い",cnt.shiny],["高ランク",cnt.top]]
     .map(([l,v])=>`<div class="stat"><b>${v}</b><span>${l}</span></div>`).join("");
+}
+
+/* ---------- Googleスプレッドシートから取得 ---------- */
+const SHEET={id:"1Pk5BLLuranWM8vQBk5BHiITI045ZZviS91tp2hWdaLY",gid:"1159297132"};
+function fetchSheet(){
+  return new Promise((resolve,reject)=>{
+    const cb="__sheetCb"+Math.random().toString(36).slice(2);
+    const s=document.createElement("script");
+    let t=null;
+    const finish=fn=>{clearTimeout(t);delete window[cb];s.remove();fn()};
+    t=setTimeout(()=>finish(()=>reject(new Error("timeout"))),10000);
+    window[cb]=resp=>finish(()=>{try{resolve(sheetToRows(resp))}catch(e){reject(e)}});
+    s.onerror=()=>finish(()=>reject(new Error("network")));
+    s.src=`https://docs.google.com/spreadsheets/d/${SHEET.id}/gviz/tq?gid=${SHEET.gid}&headers=1&tqx=out:json;responseHandler:${cb}`;
+    document.head.appendChild(s);
+  });
+}
+function sheetToRows(resp){
+  const cols=resp.table.cols.map((c,i)=>(c.label||"").trim()||`col${i}`);
+  return resp.table.rows
+    .map(r=>{const o={};cols.forEach((k,i)=>{const c=r.c[i];o[k]=c==null?"":String(c.f??c.v??"")});return o})
+    .filter(o=>o["ポケモン名"]&&!String(o["ID"]).startsWith("#"));
+}
+function setSrc(text,err){const el=$("#src");el.textContent=text;el.classList.toggle("err",!!err)}
+async function refreshFromSheet(){
+  setSrc("スプレッドシートから読み込み中…");
+  try{
+    const rows=await fetchSheet();
+    if(!rows.length)throw new Error("empty");
+    DATA=rows;computeMax();populate();render();
+    setSrc(`Googleスプレッドシートから取得（${rows.length}件・${new Date().toLocaleString("ja-JP")}）`);
+  }catch(e){
+    setSrc(`埋め込みデータ（${EMBED_COUNT}件）を表示中。最新の取得に失敗しました`,true);
+  }
+}
+
+/* ---------- init ---------- */
+function init(){
+  loadSort();
+  populate();
+  $("#chips").innerHTML=CHIP_FLAGS.map(f=>`<button class="chip" data-f="${f.key}">${f.key}</button>`).join("")+`<button class="reset" id="reset">条件をクリア</button>`;
 
   $("#sort").innerHTML=SORT_OPTS.map(o=>`<option value="${esc(o.k)}">${esc(o.l)}</option>`).join("");
   $("#sort").value=st.sort;
@@ -282,6 +328,8 @@ function init(){
   $("#dc").onclick=()=>$("#dlg").close();
   $("#dlg").onclick=e=>{if(e.target.id==="dlg")$("#dlg").close()};
   render();
+  setSrc(`埋め込みデータ（${EMBED_COUNT}件）を表示中`);
+  refreshFromSheet();
 }
 
 /* ---------- filter & sort ---------- */
