@@ -53,6 +53,8 @@ select{appearance:auto}
 .tag{display:inline-block;background:var(--panel2);border:1px solid var(--line);color:var(--sub);padding:0 7px;border-radius:6px;font-size:11px;margin:1px 3px 1px 0;white-space:nowrap}
 .tag.hot{background:var(--accent-soft);border-color:transparent;color:var(--accent)}
 .star{color:var(--gold);letter-spacing:.5px;font-size:12px;white-space:nowrap}
+.star .off{color:var(--line);opacity:.9}
+.star sup{font-size:9px;vertical-align:top;margin-left:1px}
 .iv{display:inline-flex;gap:3px;font-variant-numeric:tabular-nums}
 .iv i{font-style:normal;font-size:11px;padding:0 5px;border-radius:5px;background:var(--panel2);color:var(--sub)}
 .iv i.max{background:#2f9e5b;color:#fff}
@@ -221,7 +223,7 @@ const ivCells=d=>{
   return `<span class="iv">${v.map(x=>`<i class="${x===IVMAX?"max":""}">${x}</i>`).join("")}</span>`;
 };
 const bar=(k,d)=>{const v=num(d[k]);const pct=Math.max(0,Math.min(100,v/MAX[k]*100));return `${Math.round(v).toLocaleString()}<span class="bar"><i style="width:${pct.toFixed(1)}%"></i></span>`};
-const starHTML=d=>`<span class="star" title="${esc(d["ランク"])}">${esc(d["ランク"].replace(/[✦✧]/g,"★").replace(/[⁺]/g,"+"))}</span>`;
+const starHTML=d=>{const r=d["ランク"]||"";const f=(r.match(/✦/g)||[]).length,h=(r.match(/✧/g)||[]).length;return `<span class="star" title="${esc(r)}">${"★".repeat(f)}<span class="off">${"☆".repeat(h)}</span>${/⁺/.test(r)?"<sup>+</sup>":""}</span>`};
 
 /* ---------- state ---------- */
 const st={q:"",type:"",rank:"",flags:new Set(),view:"cards",sort:"CP(シャドウも考慮)",dir:-1};
@@ -292,7 +294,7 @@ function populate(){
   $("#rank").innerHTML='<option value="">ランク：すべて</option>';
   $("#rank").insertAdjacentHTML("beforeend",ranks.map(([r])=>`<option value="${esc(r)}">${starHTML({"ランク":r})}</option>`).join(""));
   // rank select shows plain text
-  [...$("#rank").options].forEach(o=>{if(o.value)o.textContent=o.value.replace(/[✦✧]/g,"★").replace(/⁺/g,"+")});
+  [...$("#rank").options].forEach(o=>{if(o.value)o.textContent=o.value.replace(/✦/g,"★").replace(/✧/g,"☆").replace(/⁺/g,"+")});
   const cnt={total:DATA.length,shadow:DATA.filter(d=>/シャドウ/.test(d["特徴"])).length,
     shiny:DATA.filter(d=>/色/.test(d["ニックネーム"])).length,
     top:DATA.filter(d=>rankNum(d)>=1400000).length};
