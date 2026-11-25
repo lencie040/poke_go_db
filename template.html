@@ -54,6 +54,13 @@ select{appearance:auto}
 .tag.hot{background:var(--accent-soft);border-color:transparent;color:var(--accent)}
 .star{color:var(--gold);letter-spacing:.5px;font-size:12px;white-space:nowrap}
 .star .off{color:var(--line);opacity:.9}
+.star.r1{color:#8e919c}
+.star.r2{color:#38a84b}
+.star.r3{color:#3d8cf0}
+.star.r4{color:#9a4fc2}
+.star.r5{color:#e5b400}
+.star.r6{color:#ee6a2f}
+.star.r7{color:#e8457a}
 .star sup{font-size:9px;vertical-align:top;margin-left:1px}
 .iv{display:inline-flex;gap:3px;font-variant-numeric:tabular-nums}
 .iv i{font-style:normal;font-size:11px;padding:0 5px;border-radius:5px;background:var(--panel2);color:var(--sub)}
@@ -223,7 +230,7 @@ const ivCells=d=>{
   return `<span class="iv">${v.map(x=>`<i class="${x===IVMAX?"max":""}">${x}</i>`).join("")}</span>`;
 };
 const bar=(k,d)=>{const v=num(d[k]);const pct=Math.max(0,Math.min(100,v/MAX[k]*100));return `${Math.round(v).toLocaleString()}<span class="bar"><i style="width:${pct.toFixed(1)}%"></i></span>`};
-const starHTML=d=>{const r=d["ランク"]||"";const f=(r.match(/✦/g)||[]).length,h=(r.match(/✧/g)||[]).length;return `<span class="star" title="${esc(r)}">${"★".repeat(f)}<span class="off">${"☆".repeat(h)}</span>${/⁺/.test(r)?"<sup>+</sup>":""}</span>`};
+const starHTML=d=>{const r=d["ランク"]||"";const f=(r.match(/✦/g)||[]).length,h=(r.match(/✧/g)||[]).length;return `<span class="star r${f}" title="${esc(r)}">${"★".repeat(f)}<span class="off">${"☆".repeat(h)}</span>${/⁺/.test(r)?"<sup>+</sup>":""}</span>`};
 
 /* ---------- state ---------- */
 const st={q:"",type:"",rank:"",flags:new Set(),view:"cards",sort:"CP(シャドウも考慮)",dir:-1};
