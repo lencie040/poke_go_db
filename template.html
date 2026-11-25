@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ポケモンGO 個体データベース</title>
+<style>
+:root{
+  --bg:#f6f7fb;--panel:#fff;--text:#1d2433;--sub:#667085;--line:#e4e7ee;--accent:#4f6df5;--accent-soft:#eaeefe;
+}
+@media (prefers-color-scheme:dark){
+  :root{--bg:#10131a;--panel:#181c26;--text:#e8ebf3;--sub:#98a2b8;--line:#2a3040;--accent:#7d93ff;--accent-soft:#222a4a}
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:14px/1.5 -apple-system,BlinkMacSystemFont,"Hiragino Sans","Noto Sans JP",sans-serif}
+header{padding:20px 16px 8px;max-width:1400px;margin:auto}
+h1{font-size:20px;margin:0 0 4px}
+.sub{color:var(--sub);font-size:12px}
+.controls{max-width:1400px;margin:auto;padding:8px 16px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;position:sticky;top:0;background:var(--bg);z-index:5}
+input[type=search],select{padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--text);font:inherit}
+input[type=search]{flex:1 1 220px;min-width:160px}
+.chip{border:1px solid var(--line);background:var(--panel);color:var(--text);padding:6px 10px;border-radius:999px;cursor:pointer;font:inherit}
+.chip.on{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+.count{margin-left:auto;color:var(--sub);font-size:12px}
+.wrap{max-width:1400px;margin:auto;padding:0 16px 40px}
+.tablebox{overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:12px;max-height:calc(100vh - 150px)}
+table{border-collapse:collapse;width:100%;white-space:nowrap}
+th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left}
+th{position:sticky;top:0;background:var(--panel);cursor:pointer;user-select:none;font-size:12px;color:var(--sub);z-index:2}
+th.sorted{color:var(--accent)}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+tbody tr{cursor:pointer}
+tbody tr:hover{background:var(--accent-soft)}
+.type{display:inline-block;padding:1px 8px;border-radius:999px;font-size:11px;color:#fff;margin-right:3px}
+.star{letter-spacing:1px;color:#e6a100}
+.tag{display:inline-block;background:var(--accent-soft);color:var(--accent);padding:0 6px;border-radius:4px;font-size:11px;margin-right:3px}
+dialog{border:none;border-radius:14px;padding:0;max-width:640px;width:calc(100% - 24px);background:var(--panel);color:var(--text);box-shadow:0 10px 40px rgba(0,0,0,.3)}
+dialog::backdrop{background:rgba(0,0,0,.45)}
+.dhead{padding:16px 18px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:8px}
+.dhead h2{margin:0;font-size:18px}
+.dbody{padding:8px 18px 18px;max-height:70vh;overflow:auto}
+.dbody dl{display:grid;grid-template-columns:160px 1fr;gap:0;margin:0}
+.dbody dt,.dbody dd{padding:6px 0;border-bottom:1px solid var(--line);margin:0}
+.dbody dt{color:var(--sub);font-size:12px}
+button.close{border:none;background:none;color:var(--sub);font-size:22px;cursor:pointer}
+@media (max-width:600px){.dbody dl{grid-template-columns:110px 1fr}}
+</style>
+</head>
+<body>
+<header>
+  <h1>ポケモンGO 個体データベース</h1>
+  <div class="sub">行をクリックで詳細 / 列見出しクリックで並べ替え</div>
+</header>
+<div class="controls">
+  <input type="search" id="q" placeholder="名前・ニックネーム・技・場所などで検索">
+  <select id="type"><option value="">タイプ: すべて</option></select>
+  <select id="rank"><option value="">ランク: すべて</option></select>
+  <button class="chip" data-f="シャドウ">シャドウ</button>
+  <button class="chip" data-f="色違い">色違い</button>
+  <button class="chip" data-f="キラ">キラ</button>
+  <button class="chip" data-f="XXL">XXL</button>
+  <button class="chip" data-f="とくしゅ">とくしゅ</button>
+  <span class="count" id="count"></span>
+</div>
+<div class="wrap"><div class="tablebox"><table id="tbl"><thead></thead><tbody></tbody></table></div></div>
+<dialog id="dlg"><div class="dhead"><h2 id="dt"></h2><button class="close" id="dc">×</button></div><div class="dbody" id="db"></div></dialog>
+
+<script>
+const DATA = /*__DATA__*/[];
+const TYPE_COLOR = {"ノーマル":"#8a8d98","ほのお":"#f0642f","みず":"#3b8ff0","でんき":"#e8b600","くさ":"#3fa648","こおり":"#4bc4d6","かくとう":"#c2412d","どく":"#9b4fc0","じめん":"#b58a3c","ひこう":"#7f9cf0","エスパー":"#e8578a","むし":"#8aa319","いわ":"#a89b66","ゴースト":"#6a54a8","ドラゴン":"#5a45d6","あく":"#4a3d3a","はがね":"#6e8ea0","フェアリー":"#ec7fc4"};
+const COLS = [
+  ["ID","ID",1],["ポケモン名","名前"],["ニックネーム","ニックネーム"],["ランク","ランク"],
+  ["CP(シャドウも考慮)","CP",1],["個体値","個体値"],["個体値%","IV%",1],
+  ["AP(レイドアタッカーとしての強さポイント)","AP",1],["SP(火力の強さポイント)","SP",1],["DP(ジム防衛での強さポイント)","DP",1],
+  ["タイプ1","タイプ"],["特徴","特徴"],["通常技","通常技"],["スペシャル技1","SP技1"],["スペシャル技2","SP技2"],
+  ["入手県","県"],["入手地域","地域"],["入手日","入手日"],["1 in X","1 in X"]
+];
+const NUMKEY = new Set(COLS.filter(c=>c[2]).map(c=>c[0]));
+const $ = s=>document.querySelector(s);
+let sortKey="ランク(並び替え用)", sortDir=-1, flags=new Set();
+
+const num = v=>{const n=parseFloat(String(v).replace(/,/g,""));return isNaN(n)?-Infinity:n};
+const typeChip = t=>t?`<span class="type" style="background:${TYPE_COLOR[t]||'#888'}">${t}</span>`:"";
+const esc = s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+function init(){
+  const types=[...new Set(DATA.flatMap(d=>[d["タイプ1"],d["タイプ2"]]).filter(Boolean))].sort();
+  types.forEach(t=>$("#type").insertAdjacentHTML("beforeend",`<option>${t}</option>`));
+  const ranks=[...new Map(DATA.map(d=>[d["ランク"],d["ランク(並び替え用)"]])).entries()].sort((a,b)=>num(b[1])-num(a[1]));
+  ranks.forEach(([r])=>$("#rank").insertAdjacentHTML("beforeend",`<option>${r}</option>`));
+  $("#tbl thead").innerHTML="<tr>"+COLS.map(([k,l,n])=>`<th data-k="${k}" class="${n?'num':''}">${l}</th>`).join("")+"</tr>";
+  $("#tbl thead").onclick=e=>{
+    const th=e.target.closest("th");if(!th)return;
+    let k=th.dataset.k; if(k==="ランク") k="ランク(並び替え用)"; if(k==="1 in X") k="1 in X(並べ替え用)";
+    if(sortKey===k)sortDir*=-1;else{sortKey=k;sortDir=NUMKEY.has(k)||k.includes("並")?-1:1}
+    render();
+  };
+  $("#q").oninput=render;$("#type").onchange=render;$("#rank").onchange=render;
+  document.querySelectorAll(".chip").forEach(b=>b.onclick=()=>{
+    const f=b.dataset.f;flags.has(f)?flags.delete(f):flags.add(f);b.classList.toggle("on");render();
+  });
+  $("#tbl tbody").onclick=e=>{const tr=e.target.closest("tr");if(tr)detail(DATA[+tr.dataset.i])};
+  $("#dc").onclick=()=>$("#dlg").close();
+  $("#dlg").onclick=e=>{if(e.target.id==="dlg")$("#dlg").close()};
+  render();
+}
+
+function render(){
+  const q=$("#q").value.trim().toLowerCase(), ty=$("#type").value, rk=$("#rank").value;
+  let idx=DATA.map((d,i)=>i).filter(i=>{
+    const d=DATA[i];
+    if(ty&&d["タイプ1"]!==ty&&d["タイプ2"]!==ty)return false;
+    if(rk&&d["ランク"]!==rk)return false;
+    for(const f of flags){ if(!(d["特徴"]||"").includes(f)&&!(f==="色違い"&&(d["ニックネーム"]||"").startsWith("色")))return false }
+    if(q&&!Object.values(d).join(" ").toLowerCase().includes(q))return false;
+    return true;
+  });
+  const numeric=NUMKEY.has(sortKey)||sortKey.includes("並")||sortKey==="個体値%";
+  idx.sort((a,b)=>{
+    const x=DATA[a][sortKey],y=DATA[b][sortKey];
+    const r=numeric?num(x)-num(y):String(x).localeCompare(String(y),"ja");
+    return (r||num(DATA[a]["ランク(並び替え用)"])-num(DATA[b]["ランク(並び替え用)"]))*sortDir;
+  });
+  $("#count").textContent=`${idx.length} / ${DATA.length} 件`;
+  document.querySelectorAll("th").forEach(th=>th.classList.toggle("sorted",th.dataset.k===sortKey||(th.dataset.k==="ランク"&&sortKey==="ランク(並び替え用)")||(th.dataset.k==="1 in X"&&sortKey==="1 in X(並べ替え用)")));
+  $("#tbl tbody").innerHTML=idx.map(i=>{
+    const d=DATA[i];
+    const cells=COLS.map(([k,,n])=>{
+      let v=d[k]??"";
+      if(k==="ランク")v=`<span class="star">${esc(v)}</span>`;
+      else if(k==="タイプ1")v=typeChip(d["タイプ1"])+typeChip(d["タイプ2"]);
+      else if(k==="特徴")v=String(v).split("、").filter(Boolean).map(t=>`<span class="tag">${esc(t)}</span>`).join("");
+      else v=esc(v);
+      return `<td class="${n?'num':''}">${v}</td>`;
+    }).join("");
+    return `<tr data-i="${i}">${cells}</tr>`;
+  }).join("");
+}
+
+function detail(d){
+  $("#dt").innerHTML=esc(d["ポケモン名"])+(d["ニックネーム"]&&d["ニックネーム"]!==d["ポケモン名"]?` <span class="sub">(${esc(d["ニックネーム"])})</span>`:"");
+  $("#db").innerHTML="<dl>"+Object.entries(d).filter(([k,v])=>v!==""&&!k.includes("並")).map(([k,v])=>`<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join("")+"</dl>";
+  $("#dlg").showModal();
+}
+init();
+</script>
+</body>
+</html>
