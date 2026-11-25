@@ -114,6 +114,46 @@ dialog::backdrop{background:rgba(10,14,24,.5)}
   .count{margin-left:0;width:100%}
   .seg{flex:1}.seg button{flex:1}
 }
+
+/* ---- visual polish ---- */
+h1{background:linear-gradient(90deg,var(--accent),#d6457a);-webkit-background-clip:text;background-clip:text;color:transparent;font-weight:800}
+.stat{position:relative;overflow:hidden;padding:8px 14px}
+.stat::after{content:"";position:absolute;left:0;right:0;bottom:0;height:3px;background:linear-gradient(90deg,var(--accent),transparent)}
+.stat b{font-size:19px}
+.toolbar{box-shadow:0 6px 16px -12px rgba(20,30,60,.35)}
+select,.chip,.seg button{transition:border-color .15s,background .15s,color .15s}
+.search input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 20%,transparent)}
+.chip:hover{border-color:var(--accent);color:var(--accent)}
+.chip.on:hover{color:#fff}
+.seg button.on{box-shadow:inset 0 -2px 0 var(--accent)}
+.card{position:relative;overflow:hidden;border-radius:16px;transition:transform .15s,box-shadow .15s,border-color .15s}
+.card::before{content:"";position:absolute;left:0;right:0;top:0;height:4px;background:var(--c,var(--accent))}
+.card:hover{box-shadow:0 12px 28px -10px color-mix(in srgb,var(--c,var(--accent)) 55%,transparent)}
+.card h3{font-size:17px;font-weight:800;letter-spacing:.01em}
+.card .nums div{border:1px solid color-mix(in srgb,var(--c,var(--line)) 22%,transparent);background:color-mix(in srgb,var(--c,var(--panel2)) 7%,var(--panel2))}
+.card .nums b{font-size:15px}
+.card .meta{line-height:1.5}
+thead th{letter-spacing:.02em}
+thead th:first-child{position:sticky;left:0;z-index:4;background:var(--panel2)}
+td.sticky{box-shadow:inset -1px 0 0 var(--line)}
+tbody tr{box-shadow:inset 3px 0 0 transparent;transition:background .12s,box-shadow .12s}
+tbody tr:hover{box-shadow:inset 3px 0 0 var(--c,var(--accent))}
+tbody tr:hover td.sticky{background:color-mix(in srgb,var(--c,var(--accent)) 12%,var(--panel))}
+.bar{width:76px}
+.bar i{background:linear-gradient(90deg,var(--accent),color-mix(in srgb,var(--accent) 55%,#ffffff))}
+.iv i{min-width:24px;text-align:center}
+.type{padding:2px 10px;box-shadow:0 1px 2px rgba(0,0,0,.12)}
+.tag.hot{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--accent) 35%,transparent)}
+dialog .dhead{background:linear-gradient(135deg,color-mix(in srgb,var(--c,var(--accent)) 26%,var(--panel)),var(--panel));border-bottom:none;padding:22px 22px 14px}
+dialog .dhead h2{font-size:23px;font-weight:800;letter-spacing:.01em}
+.dhead .sub{font-variant-numeric:tabular-nums}
+.sec{text-transform:none;color:var(--text);font-size:13px;font-weight:700;margin:18px 0 8px;display:flex;align-items:center;gap:6px}
+.sec::before{content:"";width:3px;height:13px;border-radius:2px;background:var(--c,var(--accent))}
+.kv div{transition:background .15s,transform .15s;border:1px solid transparent}
+.kv div:hover{background:color-mix(in srgb,var(--c,var(--accent)) 10%,var(--panel2));border-color:color-mix(in srgb,var(--c,var(--accent)) 25%,transparent)}
+.kv b{font-size:16px;font-weight:700}
+.close:hover{background:var(--line);color:var(--text)}
+.count{font-weight:600}
 </style>
 </head>
 <body>
@@ -361,7 +401,7 @@ function render(){
 
   if(isCards){
     $("#cards").innerHTML=idx.map(i=>{const d=DATA[i];return `
-      <article class="card" data-i="${i}">
+      <article class="card" data-i="${i}" style="--c:${TYPE_COLOR[d["タイプ1"]]||"#4a63e8"}">
         <div class="top">
           <div><h3>${esc(d["ポケモン名"])}<span class="lv">Lv${esc(d[LVK])}</span></h3>${d["ニックネーム"]&&d["ニックネーム"]!==d["ポケモン名"]?`<div class="nick">${esc(d["ニックネーム"])}</div>`:""}</div>
           <div class="rt">${starHTML(d)}</div>
@@ -381,7 +421,7 @@ function render(){
       th.dataset.arrow=on?(st.dir<0?"▼":"▲"):"";
     });
     $("#tbl tbody").innerHTML=idx.map(i=>{const d=DATA[i];
-      return `<tr data-i="${i}">${TABLE_COLS.map(c=>`<td class="${c.cls||""}">${c.render(d)}</td>`).join("")}</tr>`}).join("");
+      return `<tr data-i="${i}" style="--c:${TYPE_COLOR[d["タイプ1"]]||"#4a63e8"}">${TABLE_COLS.map(c=>`<td class="${c.cls||""}">${c.render(d)}</td>`).join("")}</tr>`}).join("");
   }
 }
 
@@ -424,6 +464,7 @@ function detail(d){
     <div class="kv">
       ${["GP(いろんなコンテンツで使える度合い)","EP(育成オススメ度)","LP(お気に入り度合い)"].map(k=>kv(k.split("(")[0],esc(d[k]))).join("")}
     </div>`;
+  $("#dlg").style.setProperty("--c",TYPE_COLOR[d["タイプ1"]]||"#4a63e8");
   $("#dlg").showModal();
 }
 
