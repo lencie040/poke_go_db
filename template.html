@@ -124,6 +124,8 @@ dialog::backdrop{background:rgba(10,14,24,.5)}
       <div class="search"><input type="search" id="q" placeholder="名前・ニックネーム・技・地域で検索" autocomplete="off"></div>
       <select id="type" aria-label="タイプ"><option value="">タイプ：すべて</option></select>
       <select id="rank" aria-label="ランク"><option value="">ランク：すべて</option></select>
+      <select id="sort" aria-label="並べ替え"></select>
+      <button class="chip" id="dir" title="並べ替えの向きを切り替え"></button>
       <div class="seg" id="view">
         <button data-v="cards" class="on">カード</button>
         <button data-v="table">表</button>
@@ -175,7 +177,7 @@ const bar=(k,d)=>{const v=num(d[k]);const pct=Math.max(0,Math.min(100,v/MAX[k]*1
 const starHTML=d=>`<span class="star" title="${esc(d["ランク"])}">${esc(d["ランク"].replace(/[✦✧]/g,"★").replace(/[⁺]/g,"+"))}</span>`;
 
 /* ---------- state ---------- */
-const st={q:"",type:"",rank:"",flags:new Set(),view:"cards",sort:"ランク(並び替え用)",dir:-1};
+const st={q:"",type:"",rank:"",flags:new Set(),view:"cards",sort:"CP(シャドウも考慮)",dir:-1};
 const TABLE_COLS=[
   {k:"ポケモン名",label:"ポケモン",cls:"sticky name",render:d=>`<b>${esc(d["ポケモン名"])}</b>${d["ニックネーム"]&&d["ニックネーム"]!==d["ポケモン名"]?`<small>${esc(d["ニックネーム"])}</small>`:""}`},
   {k:LVK,label:"Lv",cls:"num",num:1,render:d=>`<b>Lv${esc(d[LVK])}</b>`,sortKey:LVK},
@@ -192,6 +194,31 @@ const TABLE_COLS=[
   {k:"入手日",label:"入手日",render:d=>esc(d["入手日"])},
   {k:"ID",label:"ID",cls:"num",num:1,render:d=>esc(d["ID"])},
 ];
+
+/* ---------- sort ---------- */
+const SORT_OPTS=[
+  {k:"CP(シャドウも考慮)",l:"CP"},
+  {k:"AP(レイドアタッカーとしての強さポイント)",l:"AP"},
+  {k:"SP(火力の強さポイント)",l:"SP"},
+  {k:"DP(ジム防衛での強さポイント)",l:"DP"},
+  {k:LVK,l:"Lv"},
+  {k:"ランク(並び替え用)",l:"ランク"},
+  {k:"個体値%",l:"個体値"},
+  {k:"ポケモン名",l:"名前"},
+  {k:"ID",l:"ID"},
+];
+const isNumKey=k=>!["ポケモン名","タイプ1","通常技","特徴"].includes(k);
+function setSort(k){
+  st.sort=k;
+  st.dir=isNumKey(k)?-1:1;
+  const sel=$("#sort"); if(sel) sel.value=SORT_OPTS.some(o=>o.k===k)?k:sel.value;
+  syncDir();
+}
+function syncDir(){
+  const b=$("#dir"); if(!b) return;
+  const num=isNumKey(st.sort);
+  b.textContent=(st.dir<0?"↓ ":"↑ ")+(num?(st.dir<0?"大きい順":"小さい順"):(st.dir<0?"Z→A":"A→Z"));
+}
 
 /* ---------- init ---------- */
 function init(){
@@ -210,6 +237,11 @@ function init(){
   $("#stats").innerHTML=[["全件",cnt.total],["シャドウ",cnt.shadow],["色違い",cnt.shiny],["高ランク",cnt.top]]
     .map(([l,v])=>`<div class="stat"><b>${v}</b><span>${l}</span></div>`).join("");
 
+  $("#sort").innerHTML=SORT_OPTS.map(o=>`<option value="${esc(o.k)}">${esc(o.l)}</option>`).join("");
+  $("#sort").value=st.sort;
+  $("#sort").onchange=e=>{setSort(e.target.value);render()};
+  $("#dir").onclick=()=>{st.dir*=-1;syncDir();render()};
+  syncDir();
   $("#q").oninput=e=>{st.q=e.target.value.trim().toLowerCase();render()};
   $("#type").onchange=e=>{st.type=e.target.value;render()};
   $("#rank").onchange=e=>{st.rank=e.target.value;render()};
@@ -224,7 +256,8 @@ function init(){
   $("#tbl thead").innerHTML="<tr>"+TABLE_COLS.map(c=>`<th class="${c.cls?.includes("num")?"num":""}" data-k="${esc(c.sortKey||c.k)}">${esc(c.label)}</th>`).join("")+"</tr>";
   $("#tbl thead").onclick=e=>{
     const th=e.target.closest("th");if(!th)return;const k=th.dataset.k;
-    if(st.sort===k)st.dir*=-1;else{st.sort=k;st.dir=NUM_COLS.includes(k)||k.includes("並")||k==="ID"||k===LVK?-1:1}
+    if(st.sort===k)st.dir*=-1;else{setSort(k)}
+    syncDir();
     render();
   };
   $("#cards").onclick=e=>{const c=e.target.closest(".card");if(c)detail(DATA[+c.dataset.i])};
@@ -244,7 +277,7 @@ function filtered(){
     if(st.q&&!Object.values(d).join(" ").toLowerCase().includes(st.q))return false;
     return true;
   });
-  const isNum=NUM_COLS.includes(st.sort)||st.sort==="ID"||st.sort==="個体値%"||st.sort===LVK;
+  const isNum=isNumKey(st.sort);
   idx.sort((a,b)=>{
     const x=DATA[a][st.sort],y=DATA[b][st.sort];
     const r=isNum?num(x)-num(y):String(x).localeCompare(String(y),"ja");
