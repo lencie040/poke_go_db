@@ -213,6 +213,7 @@ function setSort(k){
   st.dir=isNumKey(k)?-1:1;
   const sel=$("#sort"); if(sel) sel.value=SORT_OPTS.some(o=>o.k===k)?k:sel.value;
   syncDir();
+  saveSort();
 }
 function syncDir(){
   const b=$("#dir"); if(!b) return;
@@ -220,8 +221,24 @@ function syncDir(){
   b.textContent=(st.dir<0?"↓ ":"↑ ")+(num?(st.dir<0?"大きい順":"小さい順"):(st.dir<0?"Z→A":"A→Z"));
 }
 
+/* ---------- saved sort state (per browser) ---------- */
+const SORT_KEY="pokego_sort_state";
+const EXTRA_SORT_KEYS=["タイプ1","通常技","特徴"];
+function loadSort(){
+  try{
+    const v=JSON.parse(localStorage.getItem(SORT_KEY)||"null");
+    if(v&&typeof v.sort==="string"&&(SORT_OPTS.some(o=>o.k===v.sort)||EXTRA_SORT_KEYS.includes(v.sort))&&(v.dir===1||v.dir===-1)){
+      st.sort=v.sort;st.dir=v.dir;
+    }
+  }catch(e){}
+}
+function saveSort(){
+  try{localStorage.setItem(SORT_KEY,JSON.stringify({sort:st.sort,dir:st.dir}))}catch(e){}
+}
+
 /* ---------- init ---------- */
 function init(){
+  loadSort();
   const types=[...new Set(DATA.flatMap(d=>[d["タイプ1"],d["タイプ2"]]).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"ja"));
   $("#type").insertAdjacentHTML("beforeend",types.map(t=>`<option>${esc(t)}</option>`).join(""));
   const ranks=[...new Map(DATA.map(d=>[d["ランク"],rankNum(d)])).entries()].sort((a,b)=>b[1]-a[1]);
@@ -240,7 +257,7 @@ function init(){
   $("#sort").innerHTML=SORT_OPTS.map(o=>`<option value="${esc(o.k)}">${esc(o.l)}</option>`).join("");
   $("#sort").value=st.sort;
   $("#sort").onchange=e=>{setSort(e.target.value);render()};
-  $("#dir").onclick=()=>{st.dir*=-1;syncDir();render()};
+  $("#dir").onclick=()=>{st.dir*=-1;syncDir();saveSort();render()};
   syncDir();
   $("#q").oninput=e=>{st.q=e.target.value.trim().toLowerCase();render()};
   $("#type").onchange=e=>{st.type=e.target.value;render()};
@@ -257,7 +274,7 @@ function init(){
   $("#tbl thead").onclick=e=>{
     const th=e.target.closest("th");if(!th)return;const k=th.dataset.k;
     if(st.sort===k)st.dir*=-1;else{setSort(k)}
-    syncDir();
+    syncDir();saveSort();
     render();
   };
   $("#cards").onclick=e=>{const c=e.target.closest(".card");if(c)detail(DATA[+c.dataset.i])};
