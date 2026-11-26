@@ -4,198 +4,219 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>ポケモンGO 個体データベース</title>
+<meta name="description" content="ポケモンGOのコレクションを検索して、CP・個体値・技を見比べられる個体データベース。">
 <style>
 :root{
-  --bg:#f5f6fa;--panel:#ffffff;--panel2:#f0f2f8;--text:#1b2030;--sub:#6b7388;--line:#e2e6ef;
-  --accent:#4a63e8;--accent-soft:#e8ecff;--gold:#d99a00;--shadow:0 1px 2px rgba(20,30,60,.06),0 4px 14px rgba(20,30,60,.05);
+  color-scheme:light dark;
+  --bg:#f2f5f1;--panel:#fff;--panel2:#f4f7f3;--text:#17271f;--sub:#506258;--line:#dce5de;
+  --accent:#146e4e;--accent-soft:#e3f3ea;--focus:#147b58;--label:#aee7c8;
+  --hero:#142b23;--hero-end:#1c4435;--hero-text:#f3fff7;--warn:#9e4929;
+  --shadow:0 3px 10px #142b2308;--radius:18px;
 }
-@media (prefers-color-scheme:dark){
-  :root{--bg:#0e1118;--panel:#171b25;--panel2:#1e2330;--text:#e6e9f2;--sub:#97a0b5;--line:#2a3142;
-    --accent:#8ea0ff;--accent-soft:#232b4a;--gold:#f0b429;--shadow:none}
+@media(prefers-color-scheme:dark){
+  :root{
+    --bg:#101b16;--panel:#182720;--panel2:#1e3027;--text:#edf7ef;--sub:#adbbb0;--line:#35483d;
+    --accent:#8bdcb0;--accent-soft:#213f31;--focus:#9ce4ba;--hero:#183629;--hero-end:#204735;
+    --warn:#ffc2a9;--shadow:none;
+  }
 }
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 html,body{margin:0}
-body{background:var(--bg);color:var(--text);font:14px/1.55 -apple-system,BlinkMacSystemFont,"Hiragino Sans","Noto Sans JP",sans-serif;-webkit-text-size-adjust:100%}
-.wrap{max-width:1320px;margin:0 auto;padding:0 16px 48px}
-
-/* header */
-header{padding:22px 0 12px;display:flex;flex-wrap:wrap;align-items:flex-end;gap:8px 16px;justify-content:space-between}
-h1{font-size:22px;margin:0;letter-spacing:.02em}
-.stats{display:flex;gap:8px;flex-wrap:wrap}
-.stat{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:6px 12px;box-shadow:var(--shadow)}
-.stat b{display:block;font-size:17px;font-variant-numeric:tabular-nums}
-.stat span{font-size:11px;color:var(--sub)}
-
-/* source */
-.src{width:100%;font-size:12px;color:var(--sub)}
-.src.err{color:#c4432c}
-
-/* toolbar */
-.toolbar{position:sticky;top:0;z-index:10;background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(6px);padding:10px 0;margin:0 -16px;padding-left:16px;padding-right:16px;border-bottom:1px solid var(--line)}
-.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
-.search{flex:1 1 260px;position:relative}
-.search input{width:100%;padding:9px 12px 9px 34px;border:1px solid var(--line);border-radius:10px;background:var(--panel);color:var(--text);font:inherit}
-.search::before{content:"⌕";position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--sub);font-size:18px}
-select,.chip,.seg button{font:inherit;border:1px solid var(--line);background:var(--panel);color:var(--text);border-radius:10px;padding:8px 11px;cursor:pointer}
-select{appearance:auto}
-.chip{border-radius:999px;padding:6px 12px;font-size:13px}
-.chip.on{background:var(--accent);border-color:var(--accent);color:#fff}
-.seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
-.seg button{border:none;border-radius:0;padding:8px 12px}
-.seg button.on{background:var(--accent-soft);color:var(--accent);font-weight:600}
-.count{margin-left:auto;color:var(--sub);font-size:12px;font-variant-numeric:tabular-nums}
-.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
-.reset{background:none;border:none;color:var(--accent);cursor:pointer;font:inherit;font-size:13px;padding:6px}
-
-/* type badges */
-.type{display:inline-block;padding:1px 9px;border-radius:999px;font-size:11px;color:#fff;font-weight:600;white-space:nowrap;margin-right:4px;text-shadow:0 1px 1px rgba(0,0,0,.2)}
-.tag{display:inline-block;background:var(--panel2);border:1px solid var(--line);color:var(--sub);padding:0 7px;border-radius:6px;font-size:11px;margin:1px 3px 1px 0;white-space:nowrap}
-.tag.hot{background:var(--accent-soft);border-color:transparent;color:var(--accent)}
-.star{color:var(--gold);letter-spacing:.5px;font-size:12px;white-space:nowrap}
-.star .off{color:var(--line);opacity:.9}
-.star.r1{color:#8e919c}
-.star.r2{color:#38a84b}
-.star.r3{color:#3d8cf0}
-.star.r4{color:#9a4fc2}
-.star.r5{color:#e5b400}
-.star.r6{color:#ee6a2f}
-.star.r7{color:#e8457a}
-.star sup{font-size:9px;vertical-align:top;margin-left:1px}
-.iv{display:inline-flex;gap:3px;font-variant-numeric:tabular-nums}
-.iv i{font-style:normal;font-size:11px;padding:0 5px;border-radius:5px;background:var(--panel2);color:var(--sub)}
-.iv i.max{background:#2f9e5b;color:#fff}
-
-/* table view */
-.tablebox{margin-top:12px;overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);max-height:calc(100vh - 210px)}
-table{border-collapse:separate;border-spacing:0;width:100%;white-space:nowrap}
-th,td{padding:9px 12px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}
-thead th{position:sticky;top:0;background:var(--panel2);z-index:2;font-size:12px;color:var(--sub);font-weight:600;cursor:pointer;user-select:none}
-thead th:hover{color:var(--text)}
-thead th.sorted{color:var(--accent)}
-thead th.sorted::after{content:attr(data-arrow);margin-left:4px}
-td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
-td.name b{font-size:15px}
-td.name small{display:block;color:var(--sub);font-size:11px}
-tbody tr{cursor:pointer;transition:background .12s}
-tbody tr:nth-child(even){background:color-mix(in srgb,var(--panel2) 45%,transparent)}
-tbody tr:hover{background:var(--accent-soft)}
-td.sticky{position:sticky;left:0;background:var(--panel);z-index:1}
-tbody tr:hover td.sticky{background:var(--accent-soft)}
-.bar{display:inline-block;width:70px;height:6px;border-radius:3px;background:var(--panel2);vertical-align:middle;margin-left:8px;overflow:hidden}
-.bar i{display:block;height:100%;background:var(--accent);border-radius:3px}
-
-/* cards */
-.cards{margin-top:12px;display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
-.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;box-shadow:var(--shadow);cursor:pointer;display:flex;flex-direction:column;gap:8px;transition:transform .12s,border-color .12s}
-.card:hover{transform:translateY(-2px);border-color:var(--accent)}
-.card .top{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
-.rt{text-align:right;flex:none}
-.lv{font-size:13px;font-weight:700;color:var(--accent);font-variant-numeric:tabular-nums;margin-left:6px;white-space:nowrap}
-.card h3{margin:0;font-size:16px;line-height:1.3}
-.card .nick{color:var(--sub);font-size:12px}
-.card .meta{font-size:12px;color:var(--sub)}
-.card .nums{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:2px}
-.card .nums div{background:var(--panel2);border-radius:8px;padding:5px 6px;text-align:center}
-.card .nums span{display:block;font-size:10px;color:var(--sub)}
-.card .nums b{font-size:14px;font-variant-numeric:tabular-nums}
-.card .foot{display:flex;flex-wrap:wrap;gap:2px;margin-top:auto;padding-top:4px}
-
-/* detail */
-dialog{border:none;border-radius:16px;padding:0;width:min(640px,calc(100% - 24px));max-height:88vh;background:var(--panel);color:var(--text);box-shadow:0 20px 60px rgba(0,0,0,.35)}
-dialog::backdrop{background:rgba(10,14,24,.5)}
-.dhead{padding:18px 20px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
-.dhead h2{margin:0;font-size:20px;line-height:1.25}
-.dhead .sub{color:var(--sub);font-size:13px;margin-top:3px}
-.close{border:none;background:var(--panel2);color:var(--sub);width:32px;height:32px;border-radius:50%;font-size:18px;cursor:pointer;flex:none}
-.dbody{padding:16px 20px 22px;overflow:auto;max-height:calc(88vh - 90px)}
-.sec{font-size:12px;color:var(--sub);font-weight:600;margin:14px 0 6px;letter-spacing:.04em}
-.sec:first-child{margin-top:0}
-.kv{display:grid;grid-template-columns:1fr 1fr;gap:6px}
-.kv div{background:var(--panel2);border-radius:10px;padding:8px 10px}
-.kv span{display:block;font-size:11px;color:var(--sub)}
-.kv b{font-size:15px;font-variant-numeric:tabular-nums;word-break:break-all}
-.kv .wide{grid-column:1/-1}
-.pill{display:inline-block;margin:2px 4px 2px 0}
-@media (max-width:560px){
-  .kv{grid-template-columns:1fr}
-  h1{font-size:19px}
-  .count{margin-left:0;width:100%}
-  .seg{flex:1}.seg button{flex:1}
+body{background:var(--bg);color:var(--text);font:1rem/1.55 -apple-system,BlinkMacSystemFont,"Hiragino Sans","Noto Sans JP",sans-serif;-webkit-text-size-adjust:100%}
+button,input,select{font:inherit;color:inherit}
+button,select{cursor:pointer}
+:focus-visible{outline:3px solid var(--focus);outline-offset:3px}
+.wrap{width:min(1280px,100% - 64px);margin-inline:auto}
+.topbar{background:var(--panel);border-bottom:1px solid var(--line)}
+.topbar .wrap{min-height:68px;display:flex;align-items:center}
+.brand{display:flex;align-items:center;gap:12px;font-weight:800;letter-spacing:.06em}
+.brand-mark{width:28px;aspect-ratio:1;border-radius:50%;background:linear-gradient(#306852 44%,#152c23 44% 56%,#d6f3e2 56%);border:2px solid #306852;display:grid;place-items:center}
+.brand-mark::after{content:"";width:8px;aspect-ratio:1;border-radius:50%;background:#e7fff0;border:2px solid #152c23}
+main{padding-block:28px 52px}
+.hero{isolation:isolate;position:relative;overflow:hidden;padding:34px 38px;background:linear-gradient(115deg,var(--hero),var(--hero-end));color:var(--hero-text);border-radius:24px}
+.hero::before{content:"";position:absolute;z-index:-1;inset:0;opacity:.42;background-image:linear-gradient(#c0f3d024 1px,transparent 1px),linear-gradient(90deg,#c0f3d024 1px,transparent 1px);background-size:28px 28px;mask-image:linear-gradient(90deg,transparent 38%,#000)}
+.hero-art{position:absolute;z-index:-1;inset:-66px 14px auto auto;width:330px;aspect-ratio:1;border-radius:50%;background:repeating-radial-gradient(circle,transparent 0 27px,#b4eac72d 28px 29px);opacity:.8}
+.hero-art::before,.hero-art::after{content:"";position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);border-radius:50%}
+.hero-art::before{width:52%;aspect-ratio:1;border:2px solid #b4eac773;background:linear-gradient(#a5e7bd34 48%,#b4eac773 48% 52%,#a5e7bd0b 52%);transform:translate(-50%,-50%) rotate(-18deg)}
+.hero-art::after{width:14%;aspect-ratio:1;border:2px solid #a5e7bda1;background:#366b52;box-shadow:0 0 0 7px #1f4334}
+.hero h1{font-size:clamp(1.65rem,4vw,2.75rem);line-height:1.2;margin:0 0 12px;letter-spacing:-.025em}
+.hero p{margin:0;color:#d0ebda}
+.src{margin:18px 0 0;font-size:.875rem;color:var(--label)}
+.src.err{color:#ffc7ac}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:14px 0 30px}
+.stat{text-align:left;border:1px solid var(--line);background:var(--panel);border-radius:14px;padding:12px 16px;box-shadow:var(--shadow)}
+.stat:hover,.stat[aria-pressed=true]{border-color:var(--accent);background:var(--accent-soft)}
+.stat span{display:block;font-size:.875rem;color:var(--sub)}
+.stat b{display:block;font-size:1.55rem;line-height:1.25;letter-spacing:-.035em;font-variant-numeric:tabular-nums}
+.collection-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px}
+h2{font-size:1.4rem;line-height:1.3;margin:0}
+.seg{display:flex;flex:none;border:1px solid var(--line);border-radius:11px;background:var(--panel);padding:3px;gap:2px}
+.seg button{background:transparent;border:0;border-radius:7px;padding:6px 12px;font-size:.875rem;color:var(--sub)}
+.seg button.on{background:var(--accent-soft);color:var(--accent);font-weight:750}
+.toolbar{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:14px;box-shadow:var(--shadow)}
+.row{display:grid;grid-template-columns:minmax(220px,1fr) minmax(122px,auto) minmax(122px,auto) minmax(145px,auto) auto;gap:8px}
+.search{position:relative;min-width:0}
+.search::before{content:"";position:absolute;left:14px;top:13px;width:10px;height:10px;border:2px solid var(--sub);border-radius:50%;pointer-events:none}
+.search::after{content:"";position:absolute;left:26px;top:25px;width:6px;height:2px;background:var(--sub);transform:rotate(45deg);pointer-events:none}
+.search input,select,.direction{width:100%;min-height:44px;padding:8px 11px;border:1px solid var(--line);border-radius:10px;background:var(--panel2)}
+.search input{padding-left:38px}
+.search input::placeholder{color:var(--sub)}
+select{appearance:none;padding-right:32px;background-image:linear-gradient(45deg,transparent 50%,var(--sub) 50%),linear-gradient(135deg,var(--sub) 50%,transparent 50%);background-position:right 16px center,right 11px center;background-size:5px 5px;background-repeat:no-repeat;text-overflow:ellipsis}
+.direction{white-space:nowrap}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.chip,.reset,.pager button,.empty button{border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:6px 12px;min-height:36px;font-size:.875rem}
+.chip.on,.chip:hover,.direction:hover,.pager button:not(:disabled):hover,.empty button:hover{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+.reset{margin-left:auto;color:var(--accent);border-color:transparent}
+.reset:hover{text-decoration:underline}
+.count{margin:15px 0 9px;color:var(--sub);font-size:.875rem;font-weight:650;font-variant-numeric:tabular-nums}
+.type,.tag{display:inline-block;white-space:nowrap;padding:3px 9px;border-radius:999px;font-size:.8125rem;font-weight:650}
+.type{background:color-mix(in srgb,var(--type) 13%,var(--panel));border:1px solid color-mix(in srgb,var(--type) 44%,var(--line));color:var(--text)}
+.tag{background:var(--panel2);color:var(--sub)}
+.tag.hot{background:var(--accent-soft);color:var(--accent)}
+.badges{display:flex;flex-wrap:wrap;gap:4px}
+.star{color:#805d00;letter-spacing:.04em;font-size:.875rem;white-space:nowrap}
+.star .off{color:var(--sub)}
+.star.r1{color:var(--sub)}.star.r2{color:#27733c}.star.r3{color:#225eb2}.star.r4{color:#793d9d}
+.star.r6{color:#a84821}.star.r7{color:#ab315c}
+@media(prefers-color-scheme:dark){
+  .star{color:#ffdb81}.star.r2{color:#91dca2}.star.r3{color:#a8ccff}.star.r4{color:#e1b4fa}
+  .star.r6{color:#ffb898}.star.r7{color:#ffb8d1}
 }
-
-/* ---- visual polish ---- */
-h1{background:linear-gradient(90deg,var(--accent),#d6457a);-webkit-background-clip:text;background-clip:text;color:transparent;font-weight:800}
-.stat{position:relative;overflow:hidden;padding:8px 14px}
-.stat::after{content:"";position:absolute;left:0;right:0;bottom:0;height:3px;background:linear-gradient(90deg,var(--accent),transparent)}
-.stat b{font-size:19px}
-.toolbar{box-shadow:0 6px 16px -12px rgba(20,30,60,.35)}
-select,.chip,.seg button{transition:border-color .15s,background .15s,color .15s}
-.search input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 20%,transparent)}
-.chip:hover{border-color:var(--accent);color:var(--accent)}
-.chip.on:hover{color:#fff}
-.seg button.on{box-shadow:inset 0 -2px 0 var(--accent)}
-.card{position:relative;overflow:hidden;border-radius:16px;transition:transform .15s,box-shadow .15s,border-color .15s}
-.card::before{content:"";position:absolute;left:0;right:0;top:0;height:4px;background:var(--c,var(--accent))}
-.card:hover{box-shadow:0 12px 28px -10px color-mix(in srgb,var(--c,var(--accent)) 55%,transparent)}
-.card h3{font-size:17px;font-weight:800;letter-spacing:.01em}
-.card .nums div{border:1px solid color-mix(in srgb,var(--c,var(--line)) 22%,transparent);background:color-mix(in srgb,var(--c,var(--panel2)) 7%,var(--panel2))}
-.card .nums b{font-size:15px}
-.card .meta{line-height:1.5}
-thead th{letter-spacing:.02em}
-thead th:first-child{position:sticky;left:0;z-index:4;background:var(--panel2)}
-td.sticky{box-shadow:inset -1px 0 0 var(--line)}
-tbody tr{box-shadow:inset 3px 0 0 transparent;transition:background .12s,box-shadow .12s}
-tbody tr:hover{box-shadow:inset 3px 0 0 var(--c,var(--accent))}
-tbody tr:hover td.sticky{background:color-mix(in srgb,var(--c,var(--accent)) 12%,var(--panel))}
-.bar{width:76px}
-.bar i{background:linear-gradient(90deg,var(--accent),color-mix(in srgb,var(--accent) 55%,#ffffff))}
-.iv i{min-width:24px;text-align:center}
-.type{padding:2px 10px;box-shadow:0 1px 2px rgba(0,0,0,.12)}
-.tag.hot{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--accent) 35%,transparent)}
-dialog .dhead{background:linear-gradient(135deg,color-mix(in srgb,var(--c,var(--accent)) 26%,var(--panel)),var(--panel));border-bottom:none;padding:22px 22px 14px}
-dialog .dhead h2{font-size:23px;font-weight:800;letter-spacing:.01em}
-.dhead .sub{font-variant-numeric:tabular-nums}
-.sec{text-transform:none;color:var(--text);font-size:13px;font-weight:700;margin:18px 0 8px;display:flex;align-items:center;gap:6px}
-.sec::before{content:"";width:3px;height:13px;border-radius:2px;background:var(--c,var(--accent))}
-.kv div{transition:background .15s,transform .15s;border:1px solid transparent}
-.kv div:hover{background:color-mix(in srgb,var(--c,var(--accent)) 10%,var(--panel2));border-color:color-mix(in srgb,var(--c,var(--accent)) 25%,transparent)}
-.kv b{font-size:16px;font-weight:700}
-.close:hover{background:var(--line);color:var(--text)}
-.count{font-weight:600}
+.star sup{font-size:.75em}
+.iv{display:inline-flex;gap:3px;font-variant-numeric:tabular-nums}
+.iv i{font-style:normal;font-size:.8125rem;min-width:25px;text-align:center;padding:1px 4px;border-radius:5px;background:var(--panel2);color:var(--sub)}
+.iv i.max{background:var(--accent-soft);color:var(--accent);font-weight:700}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(264px,100%),1fr));gap:12px}
+.card{position:relative;min-width:0;display:flex;flex-direction:column;gap:9px;padding:15px;background:var(--panel);border:1px solid var(--line);border-top:3px solid var(--c);border-radius:15px;box-shadow:var(--shadow)}
+.card:hover,.card:focus-within{border-inline-color:var(--c);border-bottom-color:var(--c)}
+.card .top{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+.card h3{margin:0;font-size:1.05rem;line-height:1.35;overflow-wrap:anywhere}
+.detail-link,.sort-head{border:0;padding:0;background:none;text-align:inherit;font:inherit}
+.detail-link{color:var(--text)}
+.card .detail-link::after{content:"";position:absolute;inset:0;border-radius:15px}
+.card .detail-link:focus-visible{outline:none}
+.card .detail-link:focus-visible::after{outline:3px solid var(--focus);outline-offset:2px}
+.lv,.nick,.meta{font-size:.875rem;color:var(--sub)}
+.lv{white-space:nowrap;font-variant-numeric:tabular-nums}
+.card .rankline{display:flex;justify-content:space-between;align-items:center;gap:4px;flex-wrap:wrap}
+.card .nums{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px}
+.card .nums div{background:var(--panel2);border-radius:8px;padding:5px 2px;text-align:center}
+.card .nums div:first-child{background:var(--accent-soft);color:var(--accent)}
+.card .nums span{display:block;font-size:.8125rem;color:var(--sub)}
+.card .nums b{font-size:1rem;font-variant-numeric:tabular-nums}
+.card .foot:empty{display:none}
+.tablebox{overflow:auto;max-height:min(70vh,660px);background:var(--panel);border:1px solid var(--line);border-radius:var(--radius)}
+table{border-collapse:separate;border-spacing:0;width:100%;white-space:nowrap;font-size:.875rem}
+th,td{padding:9px 12px;border-bottom:1px solid var(--line);text-align:left}
+thead th{position:sticky;top:0;background:var(--panel2);z-index:2;color:var(--sub)}
+thead th:first-child{left:0;z-index:3}
+.sort-head{min-height:28px;color:inherit}
+th.sorted{color:var(--accent)}
+th.sorted .sort-head::after{content:attr(data-arrow);margin-left:6px}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+td.name small{display:block;color:var(--sub)}
+td.sticky{position:sticky;left:0;background:var(--panel);box-shadow:inset -1px 0 var(--line);z-index:1}
+tbody tr:hover,tbody tr:hover td.sticky{background:var(--accent-soft)}
+tbody tr{cursor:pointer}
+.bar{display:inline-block;width:42px;height:5px;border-radius:4px;background:var(--panel2);vertical-align:middle;margin-left:7px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent);border-radius:4px}
+.empty{padding:40px 16px;text-align:center;background:var(--panel);border:1px dashed var(--line);border-radius:var(--radius);color:var(--sub)}
+.empty p{margin:0 0 12px}
+.pager{display:flex;align-items:center;justify-content:center;gap:12px;margin-top:18px;font-size:.875rem;color:var(--sub)}
+.pager button{border-radius:9px;color:var(--text)}
+.pager button:disabled{opacity:.45;cursor:default}
+dialog{border:1px solid var(--line);border-radius:var(--radius);padding:0;width:min(640px,100% - 24px);max-height:88dvh;background:var(--panel);color:var(--text);box-shadow:0 20px 60px #09160e55}
+dialog::backdrop{background:#0b1c15a0}
+.dhead{position:sticky;top:0;padding:16px 20px;background:color-mix(in srgb,var(--c) 13%,var(--panel));border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+.dhead .sub{color:var(--sub);font-size:.875rem;margin-top:4px}
+.close{border:1px solid var(--line);background:var(--panel);width:42px;height:42px;border-radius:11px;font-size:1.35rem;flex:none}
+.dbody{padding:16px 20px 22px}
+.sec{font-size:.95rem;font-weight:750;margin:18px 0 7px}
+.sec:first-child{margin-top:0}
+.kv{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+.kv div{background:var(--panel2);border-radius:8px;padding:7px 10px}
+.kv span{display:block;font-size:.8125rem;color:var(--sub)}
+.kv b{font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.kv .wide{grid-column:1/-1}
+@media(max-width:900px){
+  .wrap{width:calc(100% - 40px)}
+  .row{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .search{grid-column:1/-1}
+}
+@media(max-width:340px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:560px){
+  .wrap{width:calc(100% - 28px)}
+  .topbar .wrap{min-height:52px}
+  main{padding-top:14px}
+  .hero{padding:18px 15px;border-radius:16px}
+  .hero-art{right:-135px;opacity:.45}
+  .hero p{font-size:.875rem}
+  .hero .src{margin-top:9px}
+  .stats{gap:5px;margin:8px 0 16px}
+  .stat{padding:7px;text-align:center;border-radius:10px}
+  .stat span{font-size:.8125rem;white-space:nowrap}
+  .stat b{font-size:1.3rem}
+  .row{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .toolbar{padding:10px}
+  .chip,.reset{padding-inline:9px}
+  .reset{margin-left:0}
+  .dhead,.dbody{padding-inline:14px}
+}
 </style>
 </head>
 <body>
-<div class="wrap">
-  <header>
-    <h1>ポケモンGO 個体データベース</h1>
-    <div class="stats" id="stats"></div>
-    <div class="src" id="src"></div>
-  </header>
+<header class="topbar"><div class="wrap"><div class="brand"><span class="brand-mark" aria-hidden="true"></span>ポケモンGO 個体DB</div></div></header>
+<main class="wrap">
+  <section class="hero" aria-labelledby="page-title">
+    <div class="hero-art" aria-hidden="true"></div>
+    <h1 id="page-title">ポケモンGO<br>個体データベース</h1>
+    <p>コレクションを検索して、CP・個体値・技を見比べる。</p>
+    <div class="src" id="src" role="status"></div>
+  </section>
+  <div class="stats" id="stats" role="group" aria-label="コレクションの集計"></div>
 
-  <div class="toolbar">
-    <div class="row">
-      <div class="search"><input type="search" id="q" placeholder="名前・ニックネーム・技・地域で検索" autocomplete="off"></div>
-      <select id="type" aria-label="タイプ"><option value="">タイプ：すべて</option></select>
-      <select id="rank" aria-label="ランク"><option value="">ランク：すべて</option></select>
-      <select id="sort" aria-label="並べ替え"></select>
-      <button class="chip" id="dir" title="並べ替えの向きを切り替え"></button>
-      <div class="seg" id="view">
-        <button data-v="cards" class="on">カード</button>
-        <button data-v="table">表</button>
+  <section aria-labelledby="collection-title">
+    <div class="collection-head">
+      <h2 id="collection-title">コレクション</h2>
+      <div class="seg" id="view" role="group" aria-label="表示形式">
+        <button type="button" data-v="cards" class="on" aria-pressed="true">カード</button>
+        <button type="button" data-v="table" aria-pressed="false">一覧表</button>
       </div>
-      <span class="count" id="count"></span>
     </div>
-    <div class="chips" id="chips"></div>
-  </div>
+    <div class="toolbar">
+      <div class="row">
+        <div class="search"><input type="search" id="q" aria-label="ポケモンを検索" placeholder="名前・技・地域で検索" autocomplete="off"></div>
+        <select id="type" aria-label="タイプ"><option value="">すべてのタイプ</option></select>
+        <select id="rank" aria-label="ランク"><option value="">すべてのランク</option></select>
+        <select id="sort" aria-label="並べ替え"></select>
+        <button type="button" class="direction" id="dir" title="並べ替えの向きを切り替え"></button>
+      </div>
+      <div class="chips" id="chips" role="group" aria-label="特徴で絞り込み"></div>
+    </div>
 
-  <div id="cards" class="cards"></div>
-  <div id="tableWrap" class="tablebox" hidden>
-    <table id="tbl"><thead></thead><tbody></tbody></table>
-  </div>
-</div>
+    <p class="count" id="count" role="status" tabindex="-1"></p>
+    <div id="cards" class="cards"></div>
+    <div id="tableWrap" class="tablebox" role="region" aria-label="個体データ一覧表" tabindex="0" hidden>
+      <table id="tbl"><thead></thead><tbody></tbody></table>
+    </div>
+    <div id="empty" class="empty" hidden>
+      <p>条件に一致するポケモンが見つかりません。</p>
+      <button type="button" id="emptyReset">条件をクリア</button>
+    </div>
+    <nav id="pager" class="pager" aria-label="検索結果のページ" hidden>
+      <button type="button" id="prev">前のページ</button>
+      <span id="page"></span>
+      <button type="button" id="next">次のページ</button>
+    </nav>
+  </section>
+  <noscript>個体データを表示するには JavaScript を有効にしてください。</noscript>
+</main>
 
-<dialog id="dlg"><div class="dhead"><div id="dt"></div><button class="close" id="dc" aria-label="閉じる">×</button></div><div class="dbody" id="db"></div></dialog>
+<dialog id="dlg" aria-labelledby="detail-title">
+  <div class="dhead"><div id="dt"></div><button type="button" class="close" id="dc" aria-label="閉じる" autofocus>×</button></div>
+  <div class="dbody" id="db"></div>
+</dialog>
 
 <script>
 let DATA = /*__DATA__*/[];
@@ -209,6 +230,7 @@ const CHIP_FLAGS = [
   {key:"XXL",       test:d=>/XXL/.test(d["特徴"])},
   {key:"とくしゅ",  test:d=>/とくしゅ/.test(d["特徴"])},
   {key:"ダイマックス", test:d=>/ダイマックス/.test(d["特徴"])},
+  {key:"高ランク", test:d=>rankNum(d)>=1400000},
   {key:"交換",      test:d=>d["交換"]==="YES"},
 ];
 const NUM_COLS = ["CP(シャドウも考慮)","AP(レイドアタッカーとしての強さポイント)","SP(火力の強さポイント)","DP(ジム防衛での強さポイント)"];
@@ -220,22 +242,42 @@ const $=s=>document.querySelector(s);
 const num=v=>{const n=parseFloat(String(v).replace(/,/g,""));return isNaN(n)?-Infinity:n};
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const rankNum=d=>num(d["ランク(並び替え用)"]);
-let MAX = {};
-function computeMax(){MAX={};NUM_COLS.forEach(k=>MAX[k]=Math.max(...DATA.map(d=>num(d[k]))))}
-computeMax();
-const typeBadges=d=>[d["タイプ1"],d["タイプ2"]].filter(Boolean).map(t=>`<span class="type" style="background:${TYPE_COLOR[t]||"#888"}">${esc(t)}</span>`).join("");
-const tags=d=>(d["特徴"]||"").split("、").filter(Boolean).map(t=>`<span class="tag${/シャドウ|キラ|色|XXL|とくしゅ/.test(t)?" hot":""}">${esc(t)}</span>`).join("");
-const ivCells=d=>{
-  const v=[d["こうげき"],d["ぼうぎょ"],d["HP"]].map(x=>+x);
-  return `<span class="iv">${v.map(x=>`<i class="${x===IVMAX?"max":""}">${x}</i>`).join("")}</span>`;
+const formatNumber=value=>Number.isFinite(num(value))?numberFormat.format(Math.round(num(value))):"—";
+const numberFormat=new Intl.NumberFormat("ja-JP");
+const normalize=value=>String(value??"").normalize("NFKC").toLowerCase().replace(/[ァ-ヶ]/g,c=>String.fromCharCode(c.charCodeAt(0)-96));
+const dateNum=value=>{
+  const parts=normalize(value).match(/^(\d{4})[/.年-]\s*(\d{1,2})[/.月-]\s*(\d{1,2})日?$/);
+  return parts?Number(parts[1])*10000+Number(parts[2])*100+Number(parts[3]):-Infinity;
 };
-const bar=(k,d)=>{const v=num(d[k]);const pct=Math.max(0,Math.min(100,v/MAX[k]*100));return `${Math.round(v).toLocaleString()}<span class="bar"><i style="width:${pct.toFixed(1)}%"></i></span>`};
-const starHTML=d=>{const r=d["ランク"]||"";const f=(r.match(/✦/g)||[]).length,h=(r.match(/✧/g)||[]).length;return `<span class="star r${f}" title="${esc(r)}">${"★".repeat(f)}<span class="off">${"☆".repeat(h)}</span>${/⁺/.test(r)?"<sup>+</sup>":""}</span>`};
+const typeColor=t=>Object.hasOwn(TYPE_COLOR,t)?TYPE_COLOR[t]:"#418166";
+let MAX={},searchIndex=[];
+function indexData(){
+  MAX=Object.fromEntries(NUM_COLS.map(k=>[k,0]));
+  searchIndex=DATA.map(d=>{
+    NUM_COLS.forEach(k=>{MAX[k]=Math.max(MAX[k],num(d[k]))});
+    return normalize(Object.values(d).join(" "));
+  });
+}
+indexData();
+const typeBadges=d=>[d["タイプ1"],d["タイプ2"]].filter(Boolean).map(t=>`<span class="type" style="--type:${typeColor(t)}">${esc(t)}</span>`).join("");
+const tags=d=>(d["特徴"]||"").split("、").filter(Boolean).map(t=>`<span class="tag${/シャドウ|キラ|色|XXL|とくしゅ/.test(t)?" hot":""}">${esc(t)}</span>`).join("");
+const ivCells=d=>`<span class="iv" aria-label="攻撃・防御・HP">${["こうげき","ぼうぎょ","HP"].map(k=>`<i class="${num(d[k])===IVMAX?"max":""}">${formatNumber(d[k])}</i>`).join("")}</span>`;
+const bar=(k,d)=>{
+  const v=num(d[k]);
+  if(!Number.isFinite(v)||!MAX[k])return formatNumber(v);
+  const pct=Math.max(0,Math.min(100,v/MAX[k]*100));
+  return `${formatNumber(v)}<span class="bar" aria-hidden="true"><i style="width:${pct.toFixed(1)}%"></i></span>`;
+};
+const nickname=d=>d["ニックネーム"]&&d["ニックネーム"]!==d["ポケモン名"]?esc(d["ニックネーム"]):"";
+const detailButton=d=>`<button type="button" class="detail-link" aria-haspopup="dialog">${esc(d["ポケモン名"])}</button>`;
+
+const starHTML=d=>{const r=d["ランク"]||"";const f=(r.match(/✦/g)||[]).length,h=(r.match(/✧/g)||[]).length;return `<span class="star r${f}" title="${esc(r)}" aria-label="ランク ${f} ${/⁺/.test(r)?"プラス":""}">${"★".repeat(f)}<span class="off">${"☆".repeat(h)}</span>${/⁺/.test(r)?"<sup>+</sup>":""}</span>`};
 
 /* ---------- state ---------- */
-const st={q:"",type:"",rank:"",flags:new Set(),view:"cards",sort:"CP(シャドウも考慮)",dir:-1};
+const PAGE_SIZE=24;
+const st={page:0,q:"",type:"",rank:"",flags:new Set(),view:"cards",sort:"CP(シャドウも考慮)",dir:-1};
 const TABLE_COLS=[
-  {k:"ポケモン名",label:"ポケモン",cls:"sticky name",render:d=>`<b>${esc(d["ポケモン名"])}</b>${d["ニックネーム"]&&d["ニックネーム"]!==d["ポケモン名"]?`<small>${esc(d["ニックネーム"])}</small>`:""}`},
+  {k:"ポケモン名",label:"ポケモン",cls:"sticky name",render:d=>`<b>${detailButton(d)}</b>${nickname(d)?`<small>${nickname(d)}</small>`:""}`},
   {k:LVK,label:"Lv",cls:"num",num:1,render:d=>`<b>Lv${esc(d[LVK])}</b>`,sortKey:LVK},
   {k:"ランク(並び替え用)",label:"ランク",render:d=>starHTML(d),sortKey:"ランク(並び替え用)"},
   {k:"CP(シャドウも考慮)",label:"CP",cls:"num",num:1,render:d=>bar("CP(シャドウも考慮)",d)},
@@ -261,29 +303,33 @@ const SORT_OPTS=[
   {k:"ランク(並び替え用)",l:"ランク"},
   {k:"個体値%",l:"個体値"},
   {k:"ポケモン名",l:"名前"},
+  {k:"入手日",l:"入手日"},
+  {k:"タイプ1",l:"タイプ"},
+  {k:"特徴",l:"特徴"},
+  {k:"通常技",l:"通常技"},
+  {k:"入手地域",l:"入手地"},
   {k:"ID",l:"ID"},
 ];
-const isNumKey=k=>!["ポケモン名","タイプ1","通常技","特徴"].includes(k);
+const isTextKey=k=>["ポケモン名","タイプ1","通常技","特徴","入手地域"].includes(k);
 function setSort(k){
   st.sort=k;
-  st.dir=isNumKey(k)?-1:1;
-  const sel=$("#sort"); if(sel) sel.value=SORT_OPTS.some(o=>o.k===k)?k:sel.value;
-  syncDir();
-  saveSort();
+  st.dir=isTextKey(k)?1:-1;
 }
-function syncDir(){
-  const b=$("#dir"); if(!b) return;
-  const num=isNumKey(st.sort);
-  b.textContent=(st.dir<0?"↓ ":"↑ ")+(num?(st.dir<0?"大きい順":"小さい順"):(st.dir<0?"Z→A":"A→Z"));
+function syncSort(){
+  $("#sort").value=st.sort;
+  $("#dir").textContent=isTextKey(st.sort)
+    ?(st.dir<0?"降順":"昇順")
+    :st.sort==="入手日"?(st.dir<0?"新しい順":"古い順")
+    :(st.dir<0?"大きい順":"小さい順");
+  saveSort();
 }
 
 /* ---------- saved sort state (per browser) ---------- */
 const SORT_KEY="pokego_sort_state";
-const EXTRA_SORT_KEYS=["タイプ1","通常技","特徴"];
 function loadSort(){
   try{
     const v=JSON.parse(localStorage.getItem(SORT_KEY)||"null");
-    if(v&&typeof v.sort==="string"&&(SORT_OPTS.some(o=>o.k===v.sort)||EXTRA_SORT_KEYS.includes(v.sort))&&(v.dir===1||v.dir===-1)){
+    if(v&&typeof v.sort==="string"&&SORT_OPTS.some(o=>o.k===v.sort)&&(v.dir===1||v.dir===-1)){
       st.sort=v.sort;st.dir=v.dir;
     }
   }catch(e){}
@@ -295,18 +341,24 @@ function saveSort(){
 /* ---------- populate selects & stats (re-run when data changes) ---------- */
 function populate(){
   const types=[...new Set(DATA.flatMap(d=>[d["タイプ1"],d["タイプ2"]]).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"ja"));
-  $("#type").innerHTML='<option value="">タイプ：すべて</option>';
-  $("#type").insertAdjacentHTML("beforeend",types.map(t=>`<option>${esc(t)}</option>`).join(""));
-  const ranks=[...new Map(DATA.map(d=>[d["ランク"],rankNum(d)])).entries()].sort((a,b)=>b[1]-a[1]);
-  $("#rank").innerHTML='<option value="">ランク：すべて</option>';
-  $("#rank").insertAdjacentHTML("beforeend",ranks.map(([r])=>`<option value="${esc(r)}">${starHTML({"ランク":r})}</option>`).join(""));
-  // rank select shows plain text
-  [...$("#rank").options].forEach(o=>{if(o.value)o.textContent=o.value.replace(/✦/g,"★").replace(/✧/g,"☆").replace(/⁺/g,"+")});
-  const cnt={total:DATA.length,shadow:DATA.filter(d=>/シャドウ/.test(d["特徴"])).length,
-    shiny:DATA.filter(d=>/色/.test(d["ニックネーム"])).length,
-    top:DATA.filter(d=>rankNum(d)>=1400000).length};
-  $("#stats").innerHTML=[["全件",cnt.total],["シャドウ",cnt.shadow],["色違い",cnt.shiny],["高ランク",cnt.top]]
-    .map(([l,v])=>`<div class="stat"><b>${v}</b><span>${l}</span></div>`).join("");
+  $("#type").innerHTML='<option value="">すべてのタイプ</option>'+types.map(t=>`<option>${esc(t)}</option>`).join("");
+  const ranks=[...new Set(DATA.map(d=>d["ランク"]).filter(Boolean))].sort((a,b)=>rankOrder(b)-rankOrder(a));
+  $("#rank").innerHTML='<option value="">すべてのランク</option>'+ranks.map(r=>`<option value="${esc(r)}">${esc(r.replace(/✦/g,"★").replace(/✧/g,"☆").replace(/⁺/g,"+"))}</option>`).join("");
+  for(const key of ["type","rank"]){
+    const select=$("#"+key);
+    select.value=st[key];
+    st[key]=select.value;
+  }
+  const stats=[["全個体",""],["シャドウ","シャドウ"],["色違い","色違い"],["高ランク","高ランク"]];
+  $("#stats").innerHTML=stats.map(([label,key])=>{
+    const flag=CHIP_FLAGS.find(f=>f.key===key);
+    const count=flag?DATA.filter(flag.test).length:DATA.length;
+    return `<button type="button" class="stat" data-f="${key}" aria-pressed="false"><span>${label}</span><b>${numberFormat.format(count)}</b></button>`;
+  }).join("");
+}
+
+function rankOrder(rank){
+  return (rank.match(/✦/g)||[]).length*2+Number(rank.includes("⁺"));
 }
 
 /* ---------- Googleスプレッドシートから取得 ---------- */
@@ -332,119 +384,206 @@ function sheetToRows(resp){
 }
 function setSrc(text,err){const el=$("#src");el.textContent=text;el.classList.toggle("err",!!err)}
 async function refreshFromSheet(){
-  setSrc("スプレッドシートから読み込み中…");
+  setSrc(`保存データを表示中 · ${EMBED_COUNT}件（同期中）`);
   try{
     const rows=await fetchSheet();
     if(!rows.length)throw new Error("empty");
-    DATA=rows;computeMax();populate();render();
-    setSrc(`Googleスプレッドシートから取得（${rows.length}件・${new Date().toLocaleString("ja-JP")}）`);
+    DATA=rows;indexData();populate();render();
+    setSrc(`Google スプレッドシートと同期済み · ${rows.length}件`);
   }catch(e){
-    setSrc(`埋め込みデータ（${EMBED_COUNT}件）を表示中。最新の取得に失敗しました`,true);
+    setSrc(`保存データを表示中 · ${EMBED_COUNT}件（同期できませんでした）`,true);
   }
 }
 
 /* ---------- init ---------- */
+function clearFilters(){
+  st.q="";
+  st.type="";
+  st.rank="";
+  st.flags.clear();
+  for(const id of ["q","type","rank"])$("#"+id).value="";
+  applyFilters();
+}
+
+function applyFilters(){
+  st.page=0;
+  render();
+}
+
+function toggleFlag(event){
+  const button=event.target.closest("[data-f]");
+  if(!button)return;
+  const flag=button.dataset.f;
+  if(!flag){
+    clearFilters();
+    return;
+  }
+  st.flags.has(flag)?st.flags.delete(flag):st.flags.add(flag);
+  applyFilters();
+}
+
+function changePage(step){
+  st.page+=step;
+  render();
+  $("#tableWrap").scrollTop=0;
+  $("#count").focus();
+}
+
 function init(){
   loadSort();
   populate();
-  $("#chips").innerHTML=CHIP_FLAGS.map(f=>`<button class="chip" data-f="${f.key}">${f.key}</button>`).join("")+`<button class="reset" id="reset">条件をクリア</button>`;
-
-  $("#sort").innerHTML=SORT_OPTS.map(o=>`<option value="${esc(o.k)}">${esc(o.l)}</option>`).join("");
-  $("#sort").value=st.sort;
-  $("#sort").onchange=e=>{setSort(e.target.value);render()};
-  $("#dir").onclick=()=>{st.dir*=-1;syncDir();saveSort();render()};
-  syncDir();
-  $("#q").oninput=e=>{st.q=e.target.value.trim().toLowerCase();render()};
-  $("#type").onchange=e=>{st.type=e.target.value;render()};
-  $("#rank").onchange=e=>{st.rank=e.target.value;render()};
-  $("#chips").onclick=e=>{
-    if(e.target.id==="reset"){st.flags.clear();document.querySelectorAll(".chip").forEach(c=>c.classList.remove("on"));render();return}
-    const b=e.target.closest(".chip");if(!b)return;
-    const f=b.dataset.f;st.flags.has(f)?st.flags.delete(f):st.flags.add(f);b.classList.toggle("on");render();
-  };
-  $("#view").onclick=e=>{const b=e.target.closest("button");if(!b)return;st.view=b.dataset.v;
-    document.querySelectorAll("#view button").forEach(x=>x.classList.toggle("on",x===b));render()};
-
-  $("#tbl thead").innerHTML="<tr>"+TABLE_COLS.map(c=>`<th class="${c.cls?.includes("num")?"num":""}" data-k="${esc(c.sortKey||c.k)}">${esc(c.label)}</th>`).join("")+"</tr>";
-  $("#tbl thead").onclick=e=>{
-    const th=e.target.closest("th");if(!th)return;const k=th.dataset.k;
-    if(st.sort===k)st.dir*=-1;else{setSort(k)}
-    syncDir();saveSort();
+  $("#chips").innerHTML=CHIP_FLAGS.map(f=>`<button type="button" class="chip" data-f="${f.key}" aria-pressed="false">${f.key}</button>`).join("")
+    +'<button type="button" class="reset" id="reset" hidden>条件をクリア</button>';
+  $("#sort").innerHTML=SORT_OPTS.map(o=>`<option value="${esc(o.k)}">${esc(o.l)} 順</option>`).join("");
+  syncSort();
+  $("#sort").onchange=e=>{setSort(e.target.value);syncSort();applyFilters()};
+  $("#dir").onclick=()=>{st.dir*=-1;syncSort();applyFilters()};
+  for(const key of ["q","type","rank"]){
+    $("#"+key).addEventListener(key==="q"?"input":"change",e=>{
+      st[key]=key==="q"?e.target.value.trim():e.target.value;
+      applyFilters();
+    });
+  }
+  $("#chips").onclick=toggleFlag;
+  $("#stats").onclick=toggleFlag;
+  $("#reset").onclick=()=>{clearFilters();$("#q").focus()};
+  $("#emptyReset").onclick=()=>{clearFilters();$("#q").focus()};
+  $("#view").onclick=e=>{
+    const button=e.target.closest("[data-v]");
+    if(!button)return;
+    st.view=button.dataset.v;
+    document.querySelectorAll("#view button").forEach(b=>{
+      b.classList.toggle("on",b===button);
+      b.setAttribute("aria-pressed",b===button);
+    });
     render();
   };
-  $("#cards").onclick=e=>{const c=e.target.closest(".card");if(c)detail(DATA[+c.dataset.i])};
-  $("#tbl tbody").onclick=e=>{const tr=e.target.closest("tr");if(tr)detail(DATA[+tr.dataset.i])};
+
+  $("#tbl thead").innerHTML="<tr>"+TABLE_COLS.map(c=>`<th scope="col" class="${c.num?"num":""}" data-k="${esc(c.sortKey||c.k)}"><button type="button" class="sort-head">${esc(c.label)}</button></th>`).join("")+"</tr>";
+  $("#tbl thead").onclick=e=>{
+    const th=e.target.closest("th");
+    if(!th)return;
+    const k=th.dataset.k;
+    if(st.sort===k)st.dir*=-1;else setSort(k);
+    syncSort();
+    applyFilters();
+  };
+  for(const selector of ["#cards","#tbl tbody"]){
+    $(selector).onclick=e=>{
+      const item=e.target.closest("[data-i]");
+      if(!item)return;
+      item.querySelector(".detail-link").focus();
+      detail(DATA[+item.dataset.i]);
+    };
+  }
+  $("#prev").onclick=()=>changePage(-1);
+  $("#next").onclick=()=>changePage(1);
   $("#dc").onclick=()=>$("#dlg").close();
   $("#dlg").onclick=e=>{if(e.target.id==="dlg")$("#dlg").close()};
   render();
-  setSrc(`埋め込みデータ（${EMBED_COUNT}件）を表示中`);
   refreshFromSheet();
 }
 
-/* ---------- filter & sort ---------- */
 function filtered(){
+  const terms=normalize(st.q).split(/\s+/).filter(Boolean);
+  const flags=CHIP_FLAGS.filter(f=>st.flags.has(f.key));
   const idx=DATA.map((_,i)=>i).filter(i=>{
     const d=DATA[i];
-    if(st.type&&d["タイプ1"]!==st.type&&d["タイプ2"]!==st.type)return false;
-    if(st.rank&&d["ランク"]!==st.rank)return false;
-    for(const f of st.flags){const c=CHIP_FLAGS.find(x=>x.key===f);if(c&&!c.test(d))return false}
-    if(st.q&&!Object.values(d).join(" ").toLowerCase().includes(st.q))return false;
-    return true;
+    return (!st.type||d["タイプ1"]===st.type||d["タイプ2"]===st.type)
+      &&(!st.rank||d["ランク"]===st.rank)
+      &&flags.every(f=>f.test(d))
+      &&terms.every(term=>searchIndex[i].includes(term));
   });
-  const isNum=isNumKey(st.sort);
+  const text=isTextKey(st.sort);
+  const numeric=st.sort==="入手日"?dateNum:num;
   idx.sort((a,b)=>{
     const x=DATA[a][st.sort],y=DATA[b][st.sort];
-    const r=isNum?num(x)-num(y):String(x).localeCompare(String(y),"ja");
-    return (r||rankNum(DATA[a])-rankNum(DATA[b]))*st.dir;
+    if(text){
+      const result=String(x??"").localeCompare(String(y??""),"ja");
+      if(result)return result*st.dir;
+    }else{
+      const left=numeric(x),right=numeric(y);
+      if(left!==right){
+        if(left===-Infinity)return 1;
+        if(right===-Infinity)return -1;
+        return (left-right)*st.dir;
+      }
+    }
+    return (rankNum(DATA[b])-rankNum(DATA[a]))||a-b;
   });
   return idx;
 }
 
-/* ---------- render ---------- */
 function render(){
-  const idx=filtered();
-  $("#count").textContent=`${idx.length} / ${DATA.length} 件`;
+  const filteredIndices=filtered();
+  const total=filteredIndices.length;
+  const pages=Math.max(1,Math.ceil(total/PAGE_SIZE));
+  st.page=Math.min(Math.max(0,st.page),pages-1);
+  const start=st.page*PAGE_SIZE;
+  const idx=filteredIndices.slice(start,start+PAGE_SIZE);
+  const active=Boolean(st.q||st.type||st.rank||st.flags.size);
   const isCards=st.view==="cards";
-  $("#cards").hidden=!isCards;
-  $("#tableWrap").hidden=isCards;
+  $("#count").textContent=`${numberFormat.format(total)}件 / 全${numberFormat.format(DATA.length)}件${total?` · ${start+1}〜${start+idx.length}件を表示`:""}`;
+  $("#cards").hidden=!isCards||!total;
+  $("#tableWrap").hidden=isCards||!total;
+  $("#empty").hidden=Boolean(total);
+  $("#emptyReset").hidden=!active;
+  $("#reset").hidden=!active;
+  $("#pager").hidden=pages<=1;
+  $("#page").textContent=`${st.page+1} / ${pages}`;
+  $("#prev").disabled=st.page===0;
+  $("#next").disabled=st.page===pages-1;
+  document.querySelectorAll("[data-f]").forEach(b=>{
+    const on=b.dataset.f?st.flags.has(b.dataset.f):!active;
+    b.classList.toggle("on",on);
+    b.setAttribute("aria-pressed",on);
+  });
 
   if(isCards){
-    $("#cards").innerHTML=idx.map(i=>{const d=DATA[i];return `
-      <article class="card" data-i="${i}" style="--c:${TYPE_COLOR[d["タイプ1"]]||"#4a63e8"}">
+    $("#cards").innerHTML=idx.map(i=>{
+      const d=DATA[i];
+      const moves=[d["通常技"],d["スペシャル技1"],d["スペシャル技2"]].filter(Boolean).map(esc).join(" ・ ");
+      return `
+      <article class="card" data-i="${i}" style="--c:${typeColor(d["タイプ1"])}">
         <div class="top">
-          <div><h3>${esc(d["ポケモン名"])}<span class="lv">Lv${esc(d[LVK])}</span></h3>${d["ニックネーム"]&&d["ニックネーム"]!==d["ポケモン名"]?`<div class="nick">${esc(d["ニックネーム"])}</div>`:""}</div>
-          <div class="rt">${starHTML(d)}</div>
+          <div><h3>${detailButton(d)}</h3>${nickname(d)?`<div class="nick">${nickname(d)}</div>`:""}</div>
+          <span class="lv">Lv ${esc(d[LVK]||"—")}</span>
         </div>
-        <div>${typeBadges(d)}</div>
+        <div class="rankline"><div class="badges">${typeBadges(d)}</div>${starHTML(d)}</div>
         <div class="nums">
-          ${NUM_COLS.map(k=>`<div><span>${SHORT[k]}</span><b>${Math.round(num(d[k])).toLocaleString()}</b></div>`).join("")}
+          ${NUM_COLS.map(k=>`<div><span>${SHORT[k]}</span><b>${formatNumber(d[k])}</b></div>`).join("")}
         </div>
         <div class="meta">個体値 ${ivCells(d)}</div>
-        <div class="meta">${esc(d["通常技"])}${d["スペシャル技1"]?" ・ "+esc(d["スペシャル技1"]):""}</div>
-        <div class="foot">${tags(d)}</div>
-      </article>`}).join("")||`<p style="color:var(--sub)">該当するポケモンがいません</p>`;
+        ${moves?`<div class="meta">${moves}</div>`:""}
+        <div class="foot badges">${tags(d)}</div>
+      </article>`;
+    }).join("");
   }else{
     document.querySelectorAll("thead th").forEach(th=>{
       const on=th.dataset.k===st.sort;
       th.classList.toggle("sorted",on);
-      th.dataset.arrow=on?(st.dir<0?"▼":"▲"):"";
+      if(on)th.setAttribute("aria-sort",st.dir<0?"descending":"ascending");
+      else th.removeAttribute("aria-sort");
+      th.firstElementChild.dataset.arrow=on?(st.dir<0?"▼":"▲"):"";
     });
-    $("#tbl tbody").innerHTML=idx.map(i=>{const d=DATA[i];
-      return `<tr data-i="${i}" style="--c:${TYPE_COLOR[d["タイプ1"]]||"#4a63e8"}">${TABLE_COLS.map(c=>`<td class="${c.cls||""}">${c.render(d)}</td>`).join("")}</tr>`}).join("");
+    $("#tbl tbody").innerHTML=idx.map(i=>{
+      const d=DATA[i];
+      return `<tr data-i="${i}">${TABLE_COLS.map(c=>`<td class="${c.cls||""}">${c.render(d)}</td>`).join("")}</tr>`;
+    }).join("");
   }
 }
 
 /* ---------- detail ---------- */
 function detail(d){
-  const nick=d["ニックネーム"]&&d["ニックネーム"]!==d["ポケモン名"]?` <span class="sub">${esc(d["ニックネーム"])}</span>`:"";
-  $("#dt").innerHTML=`<h2>${esc(d["ポケモン名"])}</h2><div class="sub">${esc(d["ランク"])} ・ Lv${esc(d[LVK])} ・ ID ${esc(d["ID"])}</div>`;
+  $("#dt").innerHTML=`<h2 id="detail-title">${esc(d["ポケモン名"])}</h2>${nickname(d)?`<div class="sub">${nickname(d)}</div>`:""}<div class="sub">${esc(d["ランク"])} ・ Lv${esc(d[LVK])} ・ ID ${esc(d["ID"])}</div>`;
   const kv=(l,v,wide)=>v&&v!=="-"?`<div class="${wide?"wide":""}"><span>${esc(l)}</span><b>${v}</b></div>`:"";
   $("#db").innerHTML=`
     <div class="sec">タイプ・特徴</div>
-    <div>${typeBadges(d)} ${tags(d)}</div>
+    <div class="badges">${typeBadges(d)} ${tags(d)}</div>
     <div class="sec">強さ</div>
     <div class="kv">
-      ${NUM_COLS.map(k=>kv(SHORT[k],Math.round(num(d[k])).toLocaleString())).join("")}
+      ${NUM_COLS.map(k=>kv(k.replace(/\((.+)\)/," · $1"),formatNumber(d[k]))).join("")}
+      ${kv("SCP",esc(d["SCP(Eは身内でやってるCP3500マックスのルール)"]))}
       ${kv("1 in X",esc(d["1 in X"]))}
       ${kv("実質攻撃力",esc(d["実質攻撃力"]))}
       ${kv("実質耐久力",esc(d["実質耐久力"]))}
@@ -471,10 +610,11 @@ function detail(d){
     </div>
     <div class="sec">評価</div>
     <div class="kv">
-      ${["GP(いろんなコンテンツで使える度合い)","EP(育成オススメ度)","LP(お気に入り度合い)"].map(k=>kv(k.split("(")[0],esc(d[k]))).join("")}
+      ${["GP(いろんなコンテンツで使える度合い)","EP(育成オススメ度)","LP(お気に入り度合い)"].map(k=>kv(k.replace(/\((.+)\)/," · $1"),esc(d[k]))).join("")}
     </div>`;
-  $("#dlg").style.setProperty("--c",TYPE_COLOR[d["タイプ1"]]||"#4a63e8");
+  $("#dlg").style.setProperty("--c",typeColor(d["タイプ1"]));
   $("#dlg").showModal();
+  $("#dlg").scrollTop=0;
 }
 
 init();
